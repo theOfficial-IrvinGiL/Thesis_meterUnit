@@ -33,23 +33,40 @@ char hexaKeys[ROWS][COLS] = {
   {'7', '8', '9', 'C'},
   {'*', '0', '#', 'D'}
 };
+<<<<<<< HEAD
 byte rowPins[ROWS] = {9, 8, 7, 6};
 byte colPins[COLS] = {5, 4, 3, 2};
+=======
+byte rowPins[ROWS] = {2, 3, 4, 5};
+byte colPins[COLS] = {A0, A1, A2, A3};
+>>>>>>> 97640729d48abc479d0a07b2981d2b309ad408d6
 //object for the display
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 //object for keypad
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 //Variable declarations ------------------------------------
 
+<<<<<<< HEAD
+=======
+#define relayPin 6 //used for the relay pin
+
+>>>>>>> 97640729d48abc479d0a07b2981d2b309ad408d6
 char user_input[4];
 int addressOnEEPROM= 0;
 short   setCursor_column = 0;
 short fixedNumberOfInputs = 0;
 char codeFromEEPROM[4];
 
+<<<<<<< HEAD
 
 
 //memthods
+=======
+//PRE DEFINED VALUES: {"1157","3727","6501","6698"}
+
+
+//methods
+>>>>>>> 97640729d48abc479d0a07b2981d2b309ad408d6
 void showMeterUnit(){
   //clear the screen first
   display.clearDisplay();
@@ -139,7 +156,13 @@ void checkInputAndDecide(){
   if(matchTrigger == false){
     showMessage("Error");
     addressOnEEPROM =1;
+<<<<<<< HEAD
   }else{
+=======
+    
+  }else{
+    digitalWrite(relayPin, HIGH);
+>>>>>>> 97640729d48abc479d0a07b2981d2b309ad408d6
     showMessage("Matched");
     addressOnEEPROM =1;
   }
@@ -166,6 +189,10 @@ void setup() {
   }
   showMeterUnit();
   readCodesFromEEEPROM();
+<<<<<<< HEAD
+=======
+  pinMode(relayPin, OUTPUT);  //setup from relay
+>>>>>>> 97640729d48abc479d0a07b2981d2b309ad408d6
 }
 
 void loop() {
@@ -204,6 +231,7 @@ void loop() {
       break;
     }
   }
+  digitalWrite(relayPin, LOW);
 
 
 }
