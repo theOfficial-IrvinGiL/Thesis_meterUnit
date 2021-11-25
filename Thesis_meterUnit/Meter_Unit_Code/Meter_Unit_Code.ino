@@ -1,28 +1,24 @@
-
 /**Notice:
-
 (function keys for the meter unit)
 A - Enter key
 B - Clear key
 C - End operations
 D - Update
-
 **/
 // #include <OnewireKeypad.h>
 //include libraries for the 128x32 oled display
+#include <SPI.h>    //has to be included according to the new library that will be used for the oled
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_SH1106.h>
 #include <EEPROM.h>
 #include <Keypad.h>
 /**supporting codes------------**/
 //code to support counting the array size
 #define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
 /**------------------------------**/
-//define the screen resolutions
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
-#define OLED_RESET -1   //dont know what this is for but it is important to be included
+
+#define OLED_RESET 4   //dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 // define the values to be used in the keypad
 const byte ROWS = 4;
@@ -35,8 +31,14 @@ char hexaKeys[ROWS][COLS] = {
 };
 byte rowPins[ROWS] = {2, 3, 4, 5};
 byte colPins[COLS] = {A0, A1, A2, A3};
-//object for the display
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+//code for initializing object using new library
+Adafruit_SH1106 display(OLED_RESET); 
+#if (SH1106_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SH1106.h!");
+#endif
+
+
 //object for keypad
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 //Variable declarations ------------------------------------
@@ -164,11 +166,11 @@ String readStringFromEEPROM(int addrOffset)
 void setup() {
   Wire.begin();
   Serial.begin(9600);
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
+  
+  // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+  display.begin(SH1106_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+  // init done
+
   showMeterUnit();
   readCodesFromEEEPROM();
   pinMode(relayPin, OUTPUT);  //setup from relay
