@@ -13,6 +13,7 @@ D - Update
 #include <Adafruit_SH1106.h>
 #include <EEPROM.h>
 #include <Keypad.h>
+#include <PZEM004Tv30.h>
 /**supporting codes------------**/
 //code to support counting the array size
 #define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
@@ -34,6 +35,9 @@ byte colPins[COLS] = {A0, A1, A2, A3};
 
 //code for initializing object using new library
 Adafruit_SH1106 display(OLED_RESET); 
+// object for PZEM 004T 
+PZEM004Tv30 pzem(11, 12); //TX, RX
+
 #if (SH1106_LCDHEIGHT != 64)
 #error("Height incorrect, please fix Adafruit_SH1106.h!");
 #endif
@@ -43,13 +47,20 @@ Adafruit_SH1106 display(OLED_RESET);
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 //Variable declarations ------------------------------------
 
-#define relayPin 6 //used for the relay pin
+#define relayPin 7  //used for the relay pin
 
 char user_input[4];
 int addressOnEEPROM= 0;
 short   setCursor_column = 0;
 short fixedNumberOfInputs = 0;
 char codeFromEEPROM[4];
+bool measureMode = false; //variable indicator to measure mode or not
+
+  //variables used for millis on measuring functions
+  const long thisInterval = 2000;
+  unsigned long previousMillis = 0;
+
+
 
 //PRE DEFINED VALUES: {"1157","3727","6501","6698"}
 
@@ -116,6 +127,7 @@ void showsUser_input(char key){
 
 
 }
+//This method is called when displaying messages: Access granted and Access Denied
 void showMessage(String message){
 display.clearDisplay();
   display.setTextColor(WHITE);
@@ -126,7 +138,7 @@ display.clearDisplay();
   delay(4000);
   display.clearDisplay();
 }
-
+// this method gets the user input and compares it to the passcode values retrieved from the eeprom
 void checkInputAndDecide(){
   String compareThis, input;
   for(int x=0; x < ARRAY_SIZE(user_input); x++){
@@ -144,14 +156,17 @@ void checkInputAndDecide(){
   if(matchTrigger == false){
     showMessage("Error");
     addressOnEEPROM =1;
+    measureMode = false;
     
   }else{
     digitalWrite(relayPin, HIGH);
     showMessage("Matched");
     addressOnEEPROM =1;
+    measureMode =true;
   }
 
 }
+//method that returns the value from eeprom that is retrieved
 String readStringFromEEPROM(int addrOffset)
 {
   int newStrLen = EEPROM.read(addrOffset);
@@ -163,6 +178,91 @@ String readStringFromEEPROM(int addrOffset)
   return String(data);
 }
 
+// method code for PZEM 004T to measure energy
+void measureEnergy(float current, float voltage, float power){
+
+  //instantiate current millis here
+ 
+
+
+  display.clearDisplay();
+  float current = pzem.current();
+  float voltage = pzem.voltage();
+  float power = pzem.power();
+  float energy = pzem.energy();
+
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= thisInterval){
+    previousMillis = currentMillis;
+  
+    //for voltage display on serial
+    if(voltage != NAN){
+      Serial.print("Voltage: ");
+      Serial.print(voltage);
+      Serial.println("V");
+    } else {
+      Serial.println("Error reading voltage");
+    }
+    
+    //for Power display on serial
+    if(current != NAN){
+      Serial.print("Power: "); 
+      Serial.print(power); 
+      Serial.println("W");
+    } else {
+      Serial.println("Error reading power");
+    }
+
+    //for current display on serial
+    if(current != NAN){
+      Serial.print("Current: ");
+      Serial.print(current);
+      Serial.println("A");
+    } else {
+      Serial.println("Error reading current");
+    }
+    //for energy display on serial
+    if(current != NAN){
+      Serial.print("Energy: ");
+      Serial.print(energy,3); 
+      Serial.println("kWh");
+    } else {
+      Serial.println("Error reading energy");
+    }
+
+    Serial.println();
+    // delay(2000);
+
+
+    //displaying the values on OLED
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setTextSize(1);
+    display.setCursor(2,1);
+    display.print("Energy: "+String(energy)+" kWh");
+
+    display.setTextSize(1);
+    display.setCursor(2,15);
+    display.print("Voltage: "+String(voltage)+" V");
+
+    display.setTextSize(1);
+    display.setCursor(2,28);
+    display.print("Power: "+String(power)+" W");
+
+    display.display();
+
+  }
+  
+
+
+}
+
+
+
+
+//  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
+  
 void setup() {
   Wire.begin();
   Serial.begin(9600);
@@ -180,9 +280,21 @@ void loop() {
 
   clearScreen:
   // put your main code here, to run repeatedly:
-  showInputPasscode();
+  
   char keyValue = customKeypad.getKey();
-  if(keyValue){
+
+  //setting mode for the system to execute
+  if (measureMode == true ){ 
+
+   
+    if ((millis() - previousMillis) >= thisInterval){
+      previousMillis = millis();
+      measureEnergy();
+    }
+  }
+  else{
+    showInputPasscode();
+    if(keyValue){
     switch(keyValue){
       case 'B':
           display.clearDisplay();
@@ -201,6 +313,27 @@ void loop() {
           fixedNumberOfInputs =0;
           goto clearScreen;
       break;
+      
+      //pressing *D means to end the measuring process of the unit
+      case 'D':
+          //Reset all values
+          display.clearDisplay();
+          setCursor_column = 0;
+          keyValue = 0x00;
+          memset(user_input, 0, sizeof(user_input));
+          fixedNumberOfInputs =0;
+          measureMode = false;
+          previousMillis = 0;
+
+
+          //Enter code for sending final data here
+
+
+
+
+          goto clearScreen;
+
+      break;
 
       default:
         if(fixedNumberOfInputs < 4){
@@ -213,6 +346,8 @@ void loop() {
     }
   }
   digitalWrite(relayPin, LOW);
+  }
+  
 
 
 }
