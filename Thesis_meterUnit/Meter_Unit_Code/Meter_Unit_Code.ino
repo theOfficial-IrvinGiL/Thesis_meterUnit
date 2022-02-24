@@ -252,7 +252,7 @@ void measureEnergy(float current, float voltage, float power, float energy){
   display.setTextColor(WHITE);
   display.setTextSize(1);
   display.setCursor(2,1);
-  display.print("Energy: "+String(energy,5)+" kWh");
+  display.print("Energy: "+String(energy,7)+" kWh");
 
   display.setTextSize(1);
   display.setCursor(2,15);
@@ -261,6 +261,10 @@ void measureEnergy(float current, float voltage, float power, float energy){
   display.setTextSize(1);
   display.setCursor(2,28);
   display.print("Power: "+String(power,5)+" W");
+
+  display.setTextSize(1);
+  display.setCursor(2,41);
+  display.print("Current: "+String(current,5)+" A");
 
   display.display();
 
