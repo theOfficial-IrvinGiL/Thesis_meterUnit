@@ -1,10 +1,17 @@
 Libraries that were used in making this code is listed in here:
 
 RTC module (Real_time clock):
-  RTClib by: Adafruit 
+  -RTClib by: Adafruit 
 
 PZEM004T module:
-  PZEM004Tv30 by: Jacob Mandula
+  -PZEM004Tv30 by: Jacob Mandula
   
 OLED display module:
+  -Adafruit SSD1306 by: Adafruit
+  -U8glib by: oliver 
   
+NRF24L01 transceiver module:
+  -RF24 by: TMRh20, Avamander
+
+Keypad compoment:
+  -Keypad by: Community https://github.com/Chris-A/Keypad
