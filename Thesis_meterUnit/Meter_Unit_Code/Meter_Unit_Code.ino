@@ -5,6 +5,8 @@
 A - Enter key
 B - Clear key
 
+D - update button
+
 **/
 // #include <OnewireKeypad.h>
 //include libraries for the 128x32 oled display
@@ -24,7 +26,7 @@ B - Clear key
 #define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
 /**------------------------------**/
 #define OLED_RESET 4   //dont know what this is for but it is important to be included
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define SCREEN_ADDRESS 0x3C // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 // define the values to be used in the keypad
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -73,7 +75,7 @@ unsigned long previousMillis = 0;
   const long relayCutoff_Interval = 20000;
   unsigned long determine_minuteInterval = 0;
 
-//variable to be used on the measuring energy function
+//variable to be used on the measuring energy function, for keeping a timestapm f the module's already recorded data
 float timestamp_Energy = 0;
 //boolean variable for determining if the unit should be sending data
 boolean sendRF_mode = false;
@@ -83,8 +85,6 @@ String this_userContact = "";
  
 //PRE DEFINED VALUES: {"1157","3727","6501","6698"}
 
-
-//method to send the energy consumption data into the main unit
 
 
 

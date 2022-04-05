@@ -1,6 +1,6 @@
 void loop() {
 
-  clearScreen:
+  
   // put your main code here, to run repeatedly:
   char keyValue = customKeypad.getKey();
 
@@ -33,7 +33,7 @@ void loop() {
             keyValue = 0x00;
             memset(user_input, 0, sizeof(user_input));
             fixedNumberOfInputs =0;
-            goto clearScreen;
+            
         break;
 
         case 'A':
@@ -42,23 +42,13 @@ void loop() {
             keyValue = 0x00;
             memset(user_input, 0, sizeof(user_input));
             fixedNumberOfInputs =0;
-            goto clearScreen;
+            
         break;
         
         //pressing *D means to end the measuring process of the unit
         case 'D':
-            // //Reset all values
-            // display.clearDisplay();
-            // setCursor_column = 0;
-            // keyValue = 0x00;
-            // memset(user_input, 0, sizeof(user_input));
-            // fixedNumberOfInputs =0;
-            // measureMode = false;
-            // previousMillis = 0;
-
-
-            // //Enter code for sending final data here
-            // goto clearScreen;
+        //when pressed, interupts the unit into update mode
+        //write code for updating eeprom memory here
 
         break;
 

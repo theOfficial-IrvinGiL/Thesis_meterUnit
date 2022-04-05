@@ -114,27 +114,8 @@ void measureEnergy(float current, float voltage, float power, float energy)
   Serial.println();
   // delay(2000);
 
-  // displaying the values on OLED
-  display.clearDisplay();
-
-  display.setTextColor(WHITE);
-  display.setTextSize(1);
-  display.setCursor(2, 1);
-  display.print("Energy: " + String(energy, 7) + " kWh");
-
-  display.setTextSize(1);
-  display.setCursor(2, 15);
-  display.print("Voltage: " + String(voltage, 5) + " V");
-
-  display.setTextSize(1);
-  display.setCursor(2, 28);
-  display.print("Power: " + String(power, 5) + " W");
-
-  display.setTextSize(1);
-  display.setCursor(2, 41);
-  display.print("Current: " + String(current, 5) + " A");
-
-  display.display();
+  //display the readed values on oled
+  showEnergy_onOled(String(energy, 7), String(voltage, 5), String(power, 5), String(current, 5));
 
   // code to determine if the energy has changed for 1 minute
   if (millis() < relayCutoff_Interval)
@@ -151,6 +132,8 @@ void measureEnergy(float current, float voltage, float power, float energy)
       String currentEnergy = String(energy, 7);
       concatDateTime(currentEnergy);
       sendTo_main(RF_message);
+      
+      Serial.println(RF_message);
 
       // trip the relay off
       Serial.print("Cutoff time has passed!");
@@ -185,6 +168,8 @@ void concatDateTime(String energy_consumed)
 
   // RF_message += "_"; // buffer character
   // RF_message += this_userContact;
+
+
 }
 
 // method for sending data over RF to main unit
