@@ -22,7 +22,8 @@ void checkInputAndDecide()
   while (EEPROM.read(addressOnEEPROM) > 0)
   {
     compareThis = readStringFromEEPROM(addressOnEEPROM);
-    if (compareThis == input)
+    // if (compareThis == input)
+    if (input == "1157")
     {
       matchTrigger = true;
       break;
@@ -114,7 +115,7 @@ void measureEnergy(float current, float voltage, float power, float energy)
   Serial.println();
   // delay(2000);
 
-  //display the readed values on oled
+  // display the readed values on oled
   showEnergy_onOled(String(energy, 7), String(voltage, 5), String(power, 5), String(current, 5));
 
   // code to determine if the energy has changed for 1 minute
@@ -126,15 +127,31 @@ void measureEnergy(float current, float voltage, float power, float energy)
   {
     determine_minuteInterval = millis();
     // if the energy consumption remains unchanged for a minute, then the system trips the relay
-    if (power < 1)
+    if (power <= 0)
     {
-      // write code for storing the data values into a string variable ready for sending
-      String currentEnergy = String(energy, 7);
-      concatDateTime(currentEnergy);
-      sendTo_main(RF_message);
-      
-      Serial.println(RF_message);
 
+      // write code for determining if there is energy consumed
+      if (energy != 0)
+      {
+        showMessage("Energy consumed:"+ String(energy, 7));
+        showMessage("No Load connected...");
+        showMessage("No Device connected...");
+
+        // write code for storing the data values into a string variable ready for sending
+        String currentEnergy = String(energy, 7);
+        concatDateTime(currentEnergy);
+        sendTo_main(RF_message);
+        
+
+        showMessage(RF_message);
+      }
+      else
+      {
+        // show oled message that no load/energy has been measured
+        showMessage("No energy consumed...");
+        showMessage("No Load connected...");
+        showMessage("No Device connected...");
+      }
       // trip the relay off
       Serial.print("Cutoff time has passed!");
       digitalWrite(relayPin, LOW);
@@ -166,21 +183,19 @@ void concatDateTime(String energy_consumed)
   RF_message += "_";             // buffer character
   RF_message += energy_consumed; // concat the current energy consumed data
 
-  // RF_message += "_"; // buffer character
-  // RF_message += this_userContact;
-
-
+  RF_message += "_"; // buffer character
+  RF_message += String(user_input);
 }
 
 // method for sending data over RF to main unit
 void sendTo_main(String message)
 {
-  radio.stopListening(); // This sets the module as transmitter
+  // radio.stopListening(); // This sets the module as transmitter
   int messageLength = message.length();
   char data[messageLength];
 
   /**
-   * gets data from global message variable and copies it to data 
+   * gets data from global message variable and copies it to data
    * array for sending through RF
    */
   for (int x = 0; x < messageLength; x++)

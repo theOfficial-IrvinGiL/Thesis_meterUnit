@@ -69,7 +69,7 @@ char codeFromEEPROM[4];   //array used where the retrieved values from eeprom ar
 bool measureMode = false; //variable indicator to measure mode or not
 
 //variables used for millis on measuring functions
-const long thisInterval = 2000;
+const long thisInterval = 10000;
 unsigned long previousMillis = 0;
   //millis for determining the minute
   const long relayCutoff_Interval = 20000;

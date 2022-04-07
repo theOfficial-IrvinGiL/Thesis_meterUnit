@@ -45,8 +45,8 @@ void showsUser_input(char key) {
 void showMessage(String message) {
   display.clearDisplay();
   display.setTextColor(WHITE);
-  display.setTextSize(2);
-  display.setCursor(4, 10);
+  display.setTextSize(1);
+  display.setCursor(4, 4);
   display.print(message);
   display.display();
   delay(2000);
