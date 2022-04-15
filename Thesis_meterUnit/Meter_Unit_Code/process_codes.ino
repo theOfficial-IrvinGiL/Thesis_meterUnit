@@ -1,13 +1,37 @@
 // methods that are responsible for background process functions are written here:
 
 // declaration for nrf module.(run once)
-void nrfSetup()
+/**
+ *can also be called when entering listening mode
+ */
+void RF_setupSend()
 {
-  radio.begin(); // Starting the radio communication
-  Serial.begin(9600);
-  radio.openWritingPipe(addresses[1]);    // Setting the address at which we will send the data
-  radio.openReadingPipe(1, addresses[0]); // Setting the address at which we will receive the data
-  radio.setPALevel(RF24_PA_MAX);          // You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+
+  radio.setAutoAck(false);
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  radio.setRetries(15, 15);
+  radio.openWritingPipe(address[1]);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.stopListening();
+
+  //  radio.begin(); // Starting the radio communication
+  //  Serial.begin(9600);
+  //  radio.openWritingPipe(address[1]);    // Setting the address at which we will send the data
+  //  radio.openReadingPipe(1, address[0]); // Setting the address at which we will receive the data
+  //  radio.setPALevel(RF24_PA_MAX);          // You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
+}
+
+/**
+* method that deals with setting up the Listening functionality of Rf module
+*/
+void RF_setupListen()
+{
+  radio.setAutoAck(false);
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  radio.setRetries(15, 15);
+  radio.openReadingPipe(0, address[0]);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.startListening();
 }
 
 // this method gets the user input and compares it to the passcode values retrieved from the eeprom
@@ -26,6 +50,7 @@ void checkInputAndDecide()
     if (input == "1157")
     {
       matchTrigger = true;
+      previousMillis = millis();
       break;
     }
     addressOnEEPROM += 5;
@@ -118,49 +143,48 @@ void measureEnergy(float current, float voltage, float power, float energy)
   // display the readed values on oled
   showEnergy_onOled(String(energy, 7), String(voltage, 5), String(power, 5), String(current, 5));
 
-  // code to determine if the energy has changed for 1 minute
-  if (millis() < relayCutoff_Interval)
-  {
-    determine_minuteInterval = millis();
-  }
-  else if (millis() - determine_minuteInterval >= relayCutoff_Interval)
-  {
-    determine_minuteInterval = millis();
-    // if the energy consumption remains unchanged for a minute, then the system trips the relay
-    if (power <= 0)
-    {
+  // // code to determine if the energy has changed for 1 minute
+  // if (millis() < relayCutoff_Interval)
+  // {
+  //   determine_minuteInterval = millis();
+  // }
+  // else if (millis() - determine_minuteInterval >= relayCutoff_Interval)
+  // {
+  //   determine_minuteInterval = millis();
+  //   //turns the circuit open after 10 seconds
+  //   if (millis() - previousMillis >= 10000)
+  //   {
 
-      // write code for determining if there is energy consumed
-      if (energy != 0)
-      {
-        showMessage("Energy consumed:"+ String(energy, 7));
-        showMessage("No Load connected...");
-        showMessage("No Device connected...");
+  //     // write code for determining if there is energy consumed
+  //     if (energy != 0)
+  //     {
+  //       showMessage("Energy consumed:" + String(energy, 7));
+  //       showMessage("No Load connected...");
+  //       showMessage("No Device connected...");
 
-        // write code for storing the data values into a string variable ready for sending
-        String currentEnergy = String(energy, 7);
-        concatDateTime(currentEnergy);
-        sendTo_main(RF_message);
-        
+  //       // write code for storing the data values into a string variable ready for sending
+  //       String currentEnergy = String(energy, 7);
+  //       concatDateTime(currentEnergy);
+  //       sendTo_main(RF_message);
 
-        showMessage(RF_message);
-      }
-      else
-      {
-        // show oled message that no load/energy has been measured
-        showMessage("No energy consumed...");
-        showMessage("No Load connected...");
-        showMessage("No Device connected...");
-      }
-      // trip the relay off
-      Serial.print("Cutoff time has passed!");
-      digitalWrite(relayPin, LOW);
-      measureMode = false;
-      sendRF_mode = true;
-      display.clearDisplay();
-      RF_message = ""; // clear the global message variable
-    }
-  }
+  //       showMessage(RF_message);
+  //     }
+  //     else
+  //     {
+  //       // show oled message that no load/energy has been measured
+  //       showMessage("No energy consumed...");
+  //       showMessage("No Load connected...");
+  //       showMessage("No Device connected...");
+  //     }
+  //     // trip the relay off
+  //     Serial.print("Cutoff time has passed!");
+  //     digitalWrite(relayPin, LOW);
+  //     measureMode = false;
+  //     sendRF_mode = true;
+  //     display.clearDisplay();
+  //     RF_message = ""; // clear the global message variable
+  //   }
+  // }
 }
 
 // code for concatinating the time and date into the RFmessage variable
@@ -190,20 +214,28 @@ void concatDateTime(String energy_consumed)
 // method for sending data over RF to main unit
 void sendTo_main(String message)
 {
-  // radio.stopListening(); // This sets the module as transmitter
+  unsigned long broadcastStart = millis(); // timestamp broadcast start time
+
   int messageLength = message.length();
   char data[messageLength];
 
+  radio.openWritingPipe(address[1]);
+  radio.setPALevel(RF24_PA_MAX);
+
   /**
-   * gets data from global message variable and copies it to data
-   * array for sending through RF
-   */
+     gets data from global message variable and copies it to data
+     array for sending through RF
+  */
   for (int x = 0; x < messageLength; x++)
   {
     data[x] = message[x];
   }
 
-  // const char data[] = "First Data";
-  radio.write(&data, sizeof(data)); // Sending the data
+  //  const char data[] = "First Data";
+  for (int x = 0; x >= 30; x++)
+  {
+    radio.write(&data, sizeof(data)); // Sending the data
+  }
+
   delay(10);
 }
