@@ -1,12 +1,14 @@
 // codes for processing and dealing with updating user data functionalities are written in here...
 
+/**
+ * method for processing the data from the radio buffer
+ */
 void processRFdata()
 {
     unsigned int passcodeCount = 0;
-    bool continueLoop = LOW;
-    while (continueLoop == LOW)
+    unsigned long now_millis = millis();
+    while ((millis() - now_millis) < 300000)
     {
-
         if (radio.available())
         {
             char text[32] = "";
@@ -22,6 +24,7 @@ void processRFdata()
                 if (String(text) == "A")
                 {
                     break;
+                    break;
                 }
                 else
                 {
@@ -34,10 +37,12 @@ void processRFdata()
 }
 
 /**
-* method to reset the receive passcode array
-*/
-void resetPasscodeArray(){
-    for(int x = 0; x < sizeof(passcodeReceived); x++){
+ * method to reset the receive passcode array
+ */
+void resetPasscodeArray()
+{
+    for (int x = 0; x < sizeof(passcodeReceived); x++)
+    {
         passcodeReceived[x] = "";
     }
 }

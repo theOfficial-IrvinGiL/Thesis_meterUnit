@@ -13,77 +13,65 @@ void loop()
 
     float energy = (pzem.energy() - timestamp_Energy);
 
-    // if(millis() - previousMillis >= relayCutoff_Interval){ //turn off measuring mode if the power is zero under 10 seconds
-    //   if(power < 1){
-
-    //     if(energy > 0){
-    //       showMessage("Energy consumed:" + String(energy, 7));
-    //     }
-    //     RF_setupSend();
-    //     showMessage("No Load connected...");
-    //     showMessage("No Device connected...");
-    //     String currentEnergy = String(energy, 7);
-    //     concatDateTime(currentEnergy);
-    //     sendTo_main(RF_message);
-
-    //     digitalWrite(relayPin, LOW);
-    //     showMessage(RF_message);
-    //     measureMode = LOW;
-    //     RF_message = "";
-    //   }
-
-    // }
-
     // code for dealing with millis rollover that may cause possible bugs
     if (millis() < thisInterval)
     {
       previousMillis = 0;
     }
-    else if (millis() - previousMillis >= 10000)
+    // checks the AC circuit every 1 minute to monitor if there is load connected
+    else if (millis() - previousMillis >= 60000)
     {
-      RF_setupSend();
-      // turn the relays off after 10 seconds
-      showMessage("No Load connected...");
-      showMessage("No Device connected...");
-      String currentEnergy = String(energy, 7);
-      concatDateTime(currentEnergy);
-      sendTo_main(RF_message);
+      if (power <= 0 && energy > 0)
+      {
+        RF_setupSend(); // setup the RF for the sending functionality
+        // turn the relays off after 10 seconds
+        showMessage("No Load connected..."); // show text message on OLED
+        showMessage("No Device connected...");
+        String currentEnergy = String(energy, 10); // process to concatinate the energy consumption data into the RF message
+        concatDateTime(currentEnergy);
+        sendTo_main(RF_message); // call function to send the produced message to the main unit
 
-      digitalWrite(relayPin, LOW);
-      showMessage(RF_message);
-      measureMode = LOW;
-      RF_message = "";
+        digitalWrite(relayPin, LOW); // turn off the Relay (cut the connection on the AC circuit)
+        showMessage(RF_message);     // show the constructed message to the OLED DISPLAY
+        // reset the modes and variables that were involved in the measuring mode of the unit
+        measureMode = LOW;
+        RF_message = "";
+      }
     }
     // else if (millis() - previousMillis >= thisInterval){
     else
     {
-
+      // call measuring method and show the values into the OLED display
       measureEnergy(current, voltage, power, energy);
     }
   }
+
+  // accept passcode mode
   else
   {
+
     showInputPasscode();
     if (keyValue)
     {
       switch (keyValue)
       {
       case 'B':
-
-        //          radio.stopListening();
-
+        /**clear the oled display and reset all the variables
+         that were used on the inputting passcode event */
         display.clearDisplay();
         setCursor_column = 0;
         keyValue = 0x00;
         memset(user_input, 0, sizeof(user_input));
         fixedNumberOfInputs = 0;
+        display.clearDisplay();
 
         break;
 
       case 'A':
-
-        //          radio.stopListening();
-
+        /**
+         * pressing #A key will trigger the system to check the user
+         * input
+         */
         checkInputAndDecide();
         setCursor_column = 0;
         keyValue = 0x00;
@@ -96,11 +84,11 @@ void loop()
       case 'D':
         // when pressed, interupts the unit into update mode
         // write code for updating eeprom memory here
+        showMessage("System updating!");
         RF_setupListen();
         processRFdata();
-
-
-        resetPasscodeArray(); //reset the passcode array
+        writeData_toEEPROM(); // write data into the eeprom
+        resetPasscodeArray(); // reset the passcode array
         break;
 
       default:

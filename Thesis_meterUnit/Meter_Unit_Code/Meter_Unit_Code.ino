@@ -70,20 +70,22 @@ bool measureMode = false;      // variable indicator to measure mode or not
 const long thisInterval = 10000;
 unsigned long previousMillis = 0;
 // millis for determining the minute
-const long relayCutoff_Interval = 20000;
-unsigned long determine_minuteInterval = 0;
+const long relayCutoff_Interval = 60000;    //time limit for checking if there is an electrical load in the AC circuit
+unsigned long determine_minuteInterval = 0; // 
 
-// variable to be used on the measuring energy function, for keeping a timestapm f the module's already recorded data
+// variable to be used on the measuring energy function, for keeping a timestamp if the module's already recorded data
 float timestamp_Energy = 0;
 // boolean variable for determining if the unit should be sending data
 boolean sendRF_mode = false;
-String RF_message = ""; // vessel variable for the message to send through RF
-String this_userContact = "";
+String RF_message = "";         // contaianer variable for the message to send through RF
+String this_userContact = "";   // container variable for the 
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
 
-// PRE DEFINED VALUES: {"1157","3727","6501","6698"}
+String registered_passcode[20];  //variable used to hold the retrieved data from the eeprom memory
+
+// PRE DEFINED VALUES: {"1157"} ps. for testing
 
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
@@ -91,13 +93,13 @@ void setup()
   Wire.begin();
   Serial.begin(9600);
   radio.begin();
-  RF_setupSend();
+  // RF_setupSend();   //set up function for sending 
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SH1106_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3D (for the 128x64)
   // init done
 
   showMeterUnit();
-  readCodesFromEEEPROM();
+  loadDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
 }

@@ -22,8 +22,8 @@ void RF_setupSend()
 }
 
 /**
-* method that deals with setting up the Listening functionality of Rf module
-*/
+ * method that deals with setting up the Listening functionality of Rf module
+ */
 void RF_setupListen()
 {
   radio.setAutoAck(false);
@@ -38,37 +38,53 @@ void RF_setupListen()
 void checkInputAndDecide()
 {
   String compareThis, input;
-  for (int x = 0; x < ARRAY_SIZE(user_input); x++)
+  for (int x = 0; x < sizeof(user_input); x++)
   {
     input += user_input[x];
   }
   boolean matchTrigger = false;
-  while (EEPROM.read(addressOnEEPROM) > 0)
+
+  for (int x = 0; x < sizeof(registered_passcode); x++)
   {
-    compareThis = readStringFromEEPROM(addressOnEEPROM);
-    // if (compareThis == input)
     if (input == "1157")
+    // if (input == registered_passcode[x])
     {
-      matchTrigger = true;
+      matchTrigger = HIGH;
       previousMillis = millis();
       break;
     }
-    addressOnEEPROM += 5;
+    else
+    {
+      matchTrigger = LOW;
+    }
   }
+
+  // while (EEPROM.read(addressOnEEPROM) > 0)
+  // {
+  //   compareThis = readStringFromEEPROM(addressOnEEPROM);
+  //   // if (compareThis == input)
+  //   if (input == "1157")
+  //   {
+  //     matchTrigger = true;
+  //     previousMillis = millis();
+  //     break;
+  //   }
+  //   addressOnEEPROM += 5;
+  // }
+
   // deciding action to determine the mode of the meter unit (Measure mode: ON / OFF)
   if (matchTrigger == false)
   {
     showMessage("Error");
-    addressOnEEPROM = 1;
+    // addressOnEEPROM = 1;
     measureMode = false;
   }
   else
   {
     digitalWrite(relayPin, HIGH);
     showMessage("Matched");
-    addressOnEEPROM = 1;
+    // addressOnEEPROM = 1;
     measureMode = true;
-    delay(1000);
     // get the accumulated measurement from the internal memory of the PZEM 004T
     timestamp_Energy = pzem.energy();
     // snapshot millis time for checking every minute
@@ -79,65 +95,65 @@ void checkInputAndDecide()
 void measureEnergy(float current, float voltage, float power, float energy)
 {
   // for voltage display on serial
-  if (voltage != NAN)
-  {
-    Serial.print("Voltage: ");
-    Serial.print(voltage, 9);
-    Serial.println("V");
-  }
-  else
-  {
-    Serial.println("Error reading voltage");
-  }
+  // if (voltage != NAN)
+  // {
+  //   Serial.print("Voltage: ");
+  //   Serial.print(voltage, 9);
+  //   Serial.println("V");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading voltage");
+  // }
 
-  // for Power display on serial
-  if (current != NAN)
-  {
-    Serial.print("Power: ");
-    Serial.print(power, 9);
-    Serial.println("W");
-  }
-  else
-  {
-    Serial.println("Error reading power");
-  }
+  // // for Power display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Power: ");
+  //   Serial.print(power, 9);
+  //   Serial.println("W");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading power");
+  // }
 
-  // for current display on serial
-  if (current != NAN)
-  {
-    Serial.print("Current: ");
-    Serial.print(current, 9);
-    Serial.println("A");
-  }
-  else
-  {
-    Serial.println("Error reading current");
-  }
+  // // for current display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Current: ");
+  //   Serial.print(current, 9);
+  //   Serial.println("A");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading current");
+  // }
 
-  // for current energy display on serial
-  if (current != NAN)
-  {
-    Serial.print("Current Energy consumption: ");
-    Serial.print(energy, 9);
-    Serial.println("kWh");
-  }
-  else
-  {
-    Serial.println("Error current reading energy");
-  }
-  // for accumulated energy display on serial
-  if (current != NAN)
-  {
-    Serial.print("Accumulated Energy consumption: ");
-    Serial.print(energy + timestamp_Energy, 9);
-    Serial.println("kWh");
-  }
-  else
-  {
-    Serial.println("Error current reading energy");
-  }
+  // // for current energy display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Current Energy consumption: ");
+  //   Serial.print(energy, 9);
+  //   Serial.println("kWh");
+  // }
+  // else
+  // {
+  //   Serial.println("Error current reading energy");
+  // }
+  // // for accumulated energy display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Accumulated Energy consumption: ");
+  //   Serial.print(energy + timestamp_Energy, 9);
+  //   Serial.println("kWh");
+  // }
+  // else
+  // {
+  //   Serial.println("Error current reading energy");
+  // }
 
-  Serial.println();
+  // Serial.println();
   // delay(2000);
 
   // display the readed values on oled

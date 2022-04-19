@@ -50,7 +50,7 @@ void showMessage(String message) {
   display.print(message);
   display.display();
   delay(2000);
-  display.clearDisplay();
+  
 }
 
 //the function of this method is to display the readed values of energy into the oled
