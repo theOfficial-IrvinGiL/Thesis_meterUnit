@@ -1,7 +1,7 @@
 void loop()
 {
 
-  // put your main code here, to run repeatedly:
+  // // put your main code here, to run repeatedly:
   char keyValue = customKeypad.getKey();
 
   // setting mode for the system to execute
@@ -11,6 +11,7 @@ void loop()
     float voltage = pzem.voltage();
     float power = pzem.power();
 
+    // float energy = pzem.energy();
     float energy = (pzem.energy() - timestamp_Energy);
 
     // code for dealing with millis rollover that may cause possible bugs
@@ -19,36 +20,19 @@ void loop()
       previousMillis = 0;
     }
     // checks the AC circuit every 1 minute to monitor if there is load connected
-    else if (millis() - previousMillis >= 60000)
-    {
-      if (power <= 0 && energy > 0)
-      {
-        RF_setupSend(); // setup the RF for the sending functionality
-        // turn the relays off after 10 seconds
-        showMessage("No Load connected..."); // show text message on OLED
-        showMessage("No Device connected...");
-        String currentEnergy = String(energy, 10); // process to concatinate the energy consumption data into the RF message
-        concatDateTime(currentEnergy);
-        sendTo_main(RF_message); // call function to send the produced message to the main unit
 
-        digitalWrite(relayPin, LOW); // turn off the Relay (cut the connection on the AC circuit)
-        showMessage(RF_message);     // show the constructed message to the OLED DISPLAY
-        // reset the modes and variables that were involved in the measuring mode of the unit
-        measureMode = LOW;
-        RF_message = "";
-      }
-    }
     // else if (millis() - previousMillis >= thisInterval){
-    else
-    {
-      // call measuring method and show the values into the OLED display
-      measureEnergy(current, voltage, power, energy);
-    }
+    // else
+    // {
+    // call measuring method and show the values into the OLED display
+    measureEnergy(current, voltage, power, energy);
+    // }
   }
 
   // accept passcode mode
   else
   {
+    radio.stopListening();
 
     showInputPasscode();
     if (keyValue)
@@ -59,6 +43,7 @@ void loop()
         /**clear the oled display and reset all the variables
          that were used on the inputting passcode event */
         display.clearDisplay();
+        // resetForReMeasure();
         setCursor_column = 0;
         keyValue = 0x00;
         memset(user_input, 0, sizeof(user_input));
@@ -77,18 +62,19 @@ void loop()
         keyValue = 0x00;
         memset(user_input, 0, sizeof(user_input));
         fixedNumberOfInputs = 0;
+        // resetForReMeasure();
 
         break;
 
       // pressing *D means to end the measuring process of the unit
       case 'D':
-        // when pressed, interupts the unit into update mode
-        // write code for updating eeprom memory here
-        showMessage("System updating!");
-        RF_setupListen();
-        processRFdata();
-        writeData_toEEPROM(); // write data into the eeprom
-        resetPasscodeArray(); // reset the passcode array
+        //         // when pressed, interupts the unit into update mode
+        //         // write code for updating eeprom memory here
+        //         showMessage("System updating!");
+        // //        RF_setupListen();
+        //         processRFdata();
+        //         writeData_toEEPROM(); // write data into the eeprom
+        //         resetPasscodeArray(); // reset the passcode array
         break;
 
       default:

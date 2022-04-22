@@ -21,7 +21,7 @@ void processRFdata()
             else
             {
 
-                if (String(text) == "A")
+                if (String(text) == "")
                 {
                     break;
                     break;

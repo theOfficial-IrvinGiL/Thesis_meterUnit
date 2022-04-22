@@ -1,56 +1,37 @@
 // methods that are responsible for background process functions are written here:
 
-// declaration for nrf module.(run once)
-/**
- *can also be called when entering listening mode
- */
-void RF_setupSend()
-{
-
-  radio.setAutoAck(false);
-  SPI.setClockDivider(SPI_CLOCK_DIV4);
-  radio.setRetries(15, 15);
-  radio.openWritingPipe(address[1]);
-  radio.setPALevel(RF24_PA_MAX);
-  radio.stopListening();
-
-  //  radio.begin(); // Starting the radio communication
-  //  Serial.begin(9600);
-  //  radio.openWritingPipe(address[1]);    // Setting the address at which we will send the data
-  //  radio.openReadingPipe(1, address[0]); // Setting the address at which we will receive the data
-  //  radio.setPALevel(RF24_PA_MAX);          // You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
-}
-
-/**
- * method that deals with setting up the Listening functionality of Rf module
- */
-void RF_setupListen()
-{
-  radio.setAutoAck(false);
-  SPI.setClockDivider(SPI_CLOCK_DIV4);
-  radio.setRetries(15, 15);
-  radio.openReadingPipe(0, address[0]);
-  radio.setPALevel(RF24_PA_MAX);
-  radio.startListening();
-}
+// void resetForReMeasure()
+// {
+//   setCursor_column = 0;
+//   keyValue = 0x00;
+//   memset(user_input, 0, sizeof(user_input));
+//   fixedNumberOfInputs = 0;
+// }
 
 // this method gets the user input and compares it to the passcode values retrieved from the eeprom
 void checkInputAndDecide()
 {
-  String compareThis, input;
+  String input;
   for (int x = 0; x < sizeof(user_input); x++)
   {
     input += user_input[x];
   }
-  boolean matchTrigger = false;
+  boolean matchTrigger = LOW;
 
-  for (int x = 0; x < sizeof(registered_passcode); x++)
+  // for (int x = 0; x < sizeof(registered_passcode); x++)
+  // {
+  for (int y = 0; y < sizeof(predef_passcodes); y++)
   {
-    if (input == "1157")
+    // if (String(user_input) == predef_passcodes[y])
     // if (input == registered_passcode[x])
+    String var = predef_passcodes[y];
+    if (input == var)
     {
       matchTrigger = HIGH;
       previousMillis = millis();
+      // input = this_userContact;
+      this_userContact = input;
+      break;
       break;
     }
     else
@@ -58,6 +39,7 @@ void checkInputAndDecide()
       matchTrigger = LOW;
     }
   }
+  // }
 
   // while (EEPROM.read(addressOnEEPROM) > 0)
   // {
@@ -73,19 +55,25 @@ void checkInputAndDecide()
   // }
 
   // deciding action to determine the mode of the meter unit (Measure mode: ON / OFF)
-  if (matchTrigger == false)
+  if (matchTrigger == LOW)
   {
     showMessage("Error");
+    display.clearDisplay();
     // addressOnEEPROM = 1;
-    measureMode = false;
+    measureMode = LOW;
+    // memset(user_input, 0, sizeof(user_input));
   }
   else
   {
     digitalWrite(relayPin, HIGH);
     showMessage("Matched");
     // addressOnEEPROM = 1;
-    measureMode = true;
+    measureMode = HIGH;
+
+    // input = this_userContact;
+
     // get the accumulated measurement from the internal memory of the PZEM 004T
+    delay(1000);
     timestamp_Energy = pzem.energy();
     // snapshot millis time for checking every minute
   }
@@ -157,56 +145,52 @@ void measureEnergy(float current, float voltage, float power, float energy)
   // delay(2000);
 
   // display the readed values on oled
-  showEnergy_onOled(String(energy, 7), String(voltage, 5), String(power, 5), String(current, 5));
+  showEnergy_onOled(String(energy, 3), String(voltage, 5), String(power, 5), String(current, 5));
 
-  // // code to determine if the energy has changed for 1 minute
-  // if (millis() < relayCutoff_Interval)
-  // {
-  //   determine_minuteInterval = millis();
-  // }
-  // else if (millis() - determine_minuteInterval >= relayCutoff_Interval)
-  // {
-  //   determine_minuteInterval = millis();
-  //   //turns the circuit open after 10 seconds
-  //   if (millis() - previousMillis >= 10000)
-  //   {
+  // if (millis() - previousMillis >= 60000)
 
-  //     // write code for determining if there is energy consumed
-  //     if (energy != 0)
-  //     {
-  //       showMessage("Energy consumed:" + String(energy, 7));
-  //       showMessage("No Load connected...");
-  //       showMessage("No Device connected...");
+  if (millis() - previousMillis >= 10000)
+  {
+    if (power <= 0)
+    {
+      // RF_setupSend(); // setup the RF for the sending functionality
+      // turn the relays off after 10 seconds
+      showMessage("No Load connected."); // show text message on OLED
+      showMessage("No Device connected.");
+      
 
-  //       // write code for storing the data values into a string variable ready for sending
-  //       String currentEnergy = String(energy, 7);
-  //       concatDateTime(currentEnergy);
-  //       sendTo_main(RF_message);
+      String currentEnergy = String(energy, 3); // process to concatinate the energy consumption data into the RF message
+      concatDateTime(currentEnergy, this_userContact);
 
-  //       showMessage(RF_message);
-  //     }
-  //     else
-  //     {
-  //       // show oled message that no load/energy has been measured
-  //       showMessage("No energy consumed...");
-  //       showMessage("No Load connected...");
-  //       showMessage("No Device connected...");
-  //     }
-  //     // trip the relay off
-  //     Serial.print("Cutoff time has passed!");
-  //     digitalWrite(relayPin, LOW);
-  //     measureMode = false;
-  //     sendRF_mode = true;
-  //     display.clearDisplay();
-  //     RF_message = ""; // clear the global message variable
-  //   }
-  // }
+      digitalWrite(relayPin, LOW); // turn off the Relay (cut the connection on the AC circuit)
+      sendTo_main(RF_message);     // call function to send the produced message to the main unit
+
+      showMessage(RF_message); // show the constructed message to the OLED DISPLAY
+      // reset the modes and variables that were involved in the measuring mode of the unit
+      display.clearDisplay();
+      measureMode = LOW;
+      RF_message = "";
+      this_userContact = "";
+
+      // reset the variables and memories involved in the input passcode process
+      display.clearDisplay();
+      // resetForReMeasure();
+      setCursor_column = 0;
+      memset(user_input, 0, sizeof(user_input));
+      fixedNumberOfInputs = 0;
+      display.clearDisplay();
+    }
+    previousMillis = millis();
+  }
 }
 
 // code for concatinating the time and date into the RFmessage variable
-void concatDateTime(String energy_consumed)
+void concatDateTime(String energy_consumed, String passcode)
 {
   DateTime Thisnow = rtc.now();
+
+  RF_message += passcode;
+  RF_message += "_"; // buffer character
 
   RF_message += String(Thisnow.month(), DEC); // adding the date
   RF_message += "/";
@@ -223,20 +207,19 @@ void concatDateTime(String energy_consumed)
   RF_message += "_";             // buffer character
   RF_message += energy_consumed; // concat the current energy consumed data
 
-  RF_message += "_"; // buffer character
-  RF_message += String(user_input);
+  // RF_message += "_"; // buffer character
+  // RF_message += passcode;
+  // RF_message += "1157";
 }
 
 // method for sending data over RF to main unit
 void sendTo_main(String message)
 {
+  radio.stopListening();
   unsigned long broadcastStart = millis(); // timestamp broadcast start time
 
   int messageLength = message.length();
   char data[messageLength];
-
-  radio.openWritingPipe(address[1]);
-  radio.setPALevel(RF24_PA_MAX);
 
   /**
      gets data from global message variable and copies it to data
@@ -248,10 +231,16 @@ void sendTo_main(String message)
   }
 
   //  const char data[] = "First Data";
-  for (int x = 0; x >= 30; x++)
+  /**
+  *const char text[] = "WASSUP";
+    radio.write(&text, sizeof(text));
+    Serial.println(text);
+    delay(800);
+  */
+  while (millis() - broadcastStart <= 2000)
   {
     radio.write(&data, sizeof(data)); // Sending the data
+    delay(100);
   }
-
-  delay(10);
+  // delay(10);
 }

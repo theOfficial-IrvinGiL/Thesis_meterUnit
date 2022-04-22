@@ -43,10 +43,12 @@ RF24 radio(9, 10); // CE, CSN
 // object for keypad
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 // Setting the two addresses. One for transmitting and one for receiving
-const byte address[][6] = {"00001", "00002"};
+// const byte address[][6] = {"00001", "00002"};
+const byte meterTOmain_address[6] = "00001";
+const byte mainTOmeter_address[6] = "00002";
 /**
- * 00001 - main unit >> meter unit
- * 00002 - meter unit >> main unit
+ * 00001 - meter unit >> main unit
+ * 00002 - main unit >> meter unit
  */
 // object for real-time clock
 RTC_DS3231 rtc;
@@ -66,34 +68,55 @@ short fixedNumberOfInputs = 0; // variable used as reference to control the numb
 char codeFromEEPROM[4];        // array used where the retrieved values from eeprom are stored
 bool measureMode = false;      // variable indicator to measure mode or not
 
+// char keyValue = customKeypad.getKey();  //used for getting value when pressing the keypad
+
 // variables used for millis on measuring functions
 const long thisInterval = 10000;
 unsigned long previousMillis = 0;
 // millis for determining the minute
-const long relayCutoff_Interval = 60000;    //time limit for checking if there is an electrical load in the AC circuit
-unsigned long determine_minuteInterval = 0; // 
+const long relayCutoff_Interval = 60000;    // time limit for checking if there is an electrical load in the AC circuit
+unsigned long determine_minuteInterval = 0; //
 
 // variable to be used on the measuring energy function, for keeping a timestamp if the module's already recorded data
 float timestamp_Energy = 0;
 // boolean variable for determining if the unit should be sending data
 boolean sendRF_mode = false;
-String RF_message = "";         // contaianer variable for the message to send through RF
-String this_userContact = "";   // container variable for the 
+String RF_message = "";       // contaianer variable for the message to send through RF
+String this_userContact = ""; // container variable for the
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
 
-String registered_passcode[20];  //variable used to hold the retrieved data from the eeprom memory
+String registered_passcode[20]; // variable used to hold the retrieved data from the eeprom memory
 
-// PRE DEFINED VALUES: {"1157"} ps. for testing
+// pre define passcodes: hardcoded
+// String predef_passcodes[] = {"9664", "9333"};
+String predef_passcodes[] = {"9644", "9333"};
 
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
 {
+//  if(rtc.lostPower()){
+//  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+//  rtc.adjust(DateTime(2022, 4, 22, 9, 26, 0));
+//  }
+//  
   Wire.begin();
   Serial.begin(9600);
+
   radio.begin();
-  // RF_setupSend();   //set up function for sending 
+  radio.setAutoAck(false);
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  radio.setRetries(15, 15);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.openWritingPipe(meterTOmain_address);
+  // radio.openReadingPipe(1, address[0]);
+
+  /**
+   * code for meter >> main
+   *     radio.openWritingPipe(address[1]);
+   *     radio.stopListening();
+   */
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SH1106_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3D (for the 128x64)
