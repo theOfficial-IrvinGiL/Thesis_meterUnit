@@ -157,7 +157,6 @@ void measureEnergy(float current, float voltage, float power, float energy)
       // turn the relays off after 10 seconds
       showMessage("No Load connected."); // show text message on OLED
       showMessage("No Device connected.");
-      
 
       String currentEnergy = String(energy, 3); // process to concatinate the energy consumption data into the RF message
       concatDateTime(currentEnergy, this_userContact);
@@ -187,22 +186,35 @@ void measureEnergy(float current, float voltage, float power, float energy)
 // code for concatinating the time and date into the RFmessage variable
 void concatDateTime(String energy_consumed, String passcode)
 {
-  DateTime Thisnow = rtc.now();
+  // DateTime Thisnow = rtc.now();
+  /**
+  *digital clock display of the time
+    Serial.print(hour());
+    printDigits(minute());
+    printDigits(second());
+    Serial.print(' ');
+    Serial.print(day());
+    Serial.print(' ');
+    Serial.print(month());
+    Serial.print(' ');
+    Serial.print(year());
+    Serial.println();
+  */
 
   RF_message += passcode;
   RF_message += "_"; // buffer character
 
-  RF_message += String(Thisnow.month(), DEC); // adding the date
+  RF_message += String(month()); // adding the date
   RF_message += "/";
-  RF_message += String(Thisnow.day(), DEC);
+  RF_message += String(day());
   RF_message += "/";
-  RF_message += String(Thisnow.year(), DEC);
+  RF_message += String(year());
 
   RF_message += "_"; // buffer character
 
-  RF_message += String(Thisnow.hour(), DEC); // adding the time
+  RF_message += String(hour()); // adding the time
   RF_message += ":";
-  RF_message += String(Thisnow.minute(), DEC);
+  RF_message += String(minute());
 
   RF_message += "_";             // buffer character
   RF_message += energy_consumed; // concat the current energy consumed data

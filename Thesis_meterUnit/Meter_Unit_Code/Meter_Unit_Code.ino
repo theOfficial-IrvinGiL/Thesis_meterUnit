@@ -19,7 +19,8 @@ D - update button
 #include <PZEM004Tv30.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <RTClib.h>
+// #include <RTClib.h>
+#include <DS3232RTC.h> // https://github.com/JChristensen/DS3232RTC
 
 #define OLED_RESET 4        // dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
@@ -34,6 +35,8 @@ char hexaKeys[ROWS][COLS] = {
 byte rowPins[ROWS] = {2, 3, 4, 5};
 byte colPins[COLS] = {A0, A1, A2, A3};
 
+// code for initializing object for RTC
+DS3232RTC myRTC;
 // code for initializing object using new library
 Adafruit_SH1106 display(OLED_RESET);
 // object for PZEM 004T
@@ -51,7 +54,7 @@ const byte mainTOmeter_address[6] = "00002";
  * 00002 - main unit >> meter unit
  */
 // object for real-time clock
-RTC_DS3231 rtc;
+// RTC_DS3231 rtc;
 
 #if (SH1106_LCDHEIGHT != 64)
 #error("Height incorrect, please fix Adafruit_SH1106.h!");
@@ -91,16 +94,16 @@ String registered_passcode[20]; // variable used to hold the retrieved data from
 
 // pre define passcodes: hardcoded
 // String predef_passcodes[] = {"9664", "9333"};
-String predef_passcodes[] = {"9644", "9333"};
+String predef_passcodes[] = {"9644", "9333","5373", "2267"};
 
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
 {
-//  if(rtc.lostPower()){
-//  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-//  rtc.adjust(DateTime(2022, 4, 22, 9, 26, 0));
-//  }
-//  
+  //  if(rtc.lostPower()){
+  //  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  //  rtc.adjust(DateTime(2022, 4, 22, 9, 26, 0));
+  //  }
+  //
   Wire.begin();
   Serial.begin(9600);
 
@@ -121,6 +124,17 @@ void setup()
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SH1106_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3D (for the 128x64)
   // init done
+  // RTC
+  myRTC.begin();
+  setSyncProvider(myRTC.get); // the function to get the time from the RTC
+  if (timeStatus() != timeSet)
+  {
+    Serial.println("Unable to sync with the RTC");
+  }
+  else
+  {
+    Serial.println("RTC has set the system time");
+  }
 
   showMeterUnit();
   loadDataFromEEEPROM();
