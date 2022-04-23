@@ -1,11 +1,16 @@
+
 /**Notice:
 (function keys for the meter unit)
 A - Enter key
 B - Clear key
-C - End operations
-D - Update
+
+D - update button
+
 **/
-// #include <OnewireKeypad.h>
+
+// library instantiations
+
+
 //include libraries for the 128x32 oled display
 #include <SPI.h>    //has to be included according to the new library that will be used for the oled
 #include <Wire.h>
@@ -13,10 +18,14 @@ D - Update
 #include <Adafruit_SH1106.h>
 #include <EEPROM.h>
 #include <Keypad.h>
-/**supporting codes------------**/
-//code to support counting the array size
-#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
-/**------------------------------**/
+#include <PZEM004Tv30.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+// #include <RTClib.h>
+#include <DS3232RTC.h> // https://github.com/JChristensen/DS3232RTC
+
+#define OLED_RESET 4        // dont know what this is for but it is important to be included
+#define SCREEN_ADDRESS 0x3C // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 
 #define OLED_RESET 4   //dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
@@ -24,195 +33,115 @@ D - Update
 const byte ROWS = 4;
 const byte COLS = 4;
 char hexaKeys[ROWS][COLS] = {
-  {'1', '2', '3', 'A'},
-  {'4', '5', '6', 'B'},
-  {'7', '8', '9', 'C'},
-  {'*', '0', '#', 'D'}
-};
+    {'1', '2', '3', 'A'},
+    {'4', '5', '6', 'B'},
+    {'7', '8', '9', 'C'},
+    {'*', '0', '#', 'D'}};
 byte rowPins[ROWS] = {2, 3, 4, 5};
 byte colPins[COLS] = {A0, A1, A2, A3};
 
-//code for initializing object using new library
-Adafruit_SH1106 display(OLED_RESET); 
+
+// code for initializing object for RTC
+DS3232RTC myRTC;
+// code for initializing object using new library
+Adafruit_SH1106 display(OLED_RESET);
+// object for PZEM 004T
+PZEM004Tv30 pzem(11, 12); // TX, RX
+// object for RF module
+RF24 radio(9, 10); // CE, CSN
+// object for keypad
+Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+// Setting the two addresses. One for transmitting and one for receiving
+// const byte address[][6] = {"00001", "00002"};
+const byte meterTOmain_address[6] = "00001";
+const byte mainTOmeter_address[6] = "00002";
+/**
+ * 00001 - meter unit >> main unit
+ * 00002 - main unit >> meter unit
+ */
+// object for real-time clock
+// RTC_DS3231 rtc;
+
 #if (SH1106_LCDHEIGHT != 64)
 #error("Height incorrect, please fix Adafruit_SH1106.h!");
 #endif
 
+// Variable declarations ------------------------------------
 
-//object for keypad
-Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
-//Variable declarations ------------------------------------
+#define relayPin 7 // used for the relay pin
 
-#define relayPin 6 //used for the relay pin
+char user_input[4];            // array for getting the user input; this is the array where the values are stored
+int addressOnEEPROM = 0;       // variable used in determining the address when looping through the eeprom memory
+short setCursor_column = 0;    // variable used as reference for the collumn when the user will be inputing the passcode
+short fixedNumberOfInputs = 0; // variable used as reference to control the number of inputs from the user
+char codeFromEEPROM[4];        // array used where the retrieved values from eeprom are stored
+bool measureMode = false;      // variable indicator to measure mode or not
 
-char user_input[4];
-int addressOnEEPROM= 0;
-short   setCursor_column = 0;
-short fixedNumberOfInputs = 0;
-char codeFromEEPROM[4];
-
-//PRE DEFINED VALUES: {"1157","3727","6501","6698"}
+// char keyValue = customKeypad.getKey();  //used for getting value when pressing the keypad
 
 
-//methods
-void showMeterUnit(){
-  //clear the screen first
-  display.clearDisplay();
-  //set text color
-  display.setTextColor(WHITE);
-  //set text size
-  display.setTextSize(2);
-  //set the cursor coordinates
-  display.setCursor(4,10);
-  display.print("Meter Unit");
-  //display the "meter unit" text
-  display.display();
-  delay(4000);
-  //clear the oled display
-  display.clearDisplay();
-}
+// variables used for millis on measuring functions
+const long thisInterval = 10000;
+unsigned long previousMillis = 0;
+// millis for determining the minute
+const long relayCutoff_Interval = 60000;    // time limit for checking if there is an electrical load in the AC circuit
+unsigned long determine_minuteInterval = 0; //
 
-void showInputPasscode(){
-  // display.clearDisplay();
-  //set Text size
-  display.setTextSize(1);
-  //set the cursor coordinates
-  display.setCursor(0,0);
-  display.println("Input Passcode:");
-  display.display();
-}
-void readCodesFromEEEPROM(){
-  String code = "";
-  int indexCounter = 0;
-  addressOnEEPROM +=1;
-  if(EEPROM.read(0) <= 0){
-    Serial.println("No memories on eeprom");
-  }else{
-    while(EEPROM.read(addressOnEEPROM) > 0){
-      char codesArray[EEPROM.read(addressOnEEPROM)];
-      for(int x = 0; x < EEPROM.read(addressOnEEPROM); x++){
-        codesArray[x] = EEPROM.read(addressOnEEPROM+(x+1));
-      }
-      Serial.println(String(codesArray));
+// variable to be used on the measuring energy function, for keeping a timestamp if the module's already recorded data
+float timestamp_Energy = 0;
+// boolean variable for determining if the unit should be sending data
+boolean sendRF_mode = false;
+String RF_message = "";       // contaianer variable for the message to send through RF
+String this_userContact = ""; // container variable for the
 
-      addressOnEEPROM+=5;
-      indexCounter++;
-    }
-  }
+// variable declaration that deals with updating the user data : Main -> Meter transmittion
+String passcodeReceived[20];
 
-  addressOnEEPROM = 1;
-}
-void showsUser_input(char key){
-  // //set text color
-  display.setTextColor(WHITE);
-  //set text size
-  display.setTextSize(2);
-  //set the cursor coordinates
-  display.setCursor(setCursor_column,15);
-  display.print(key);
-  setCursor_column += 12;
-  // user_Input += key;
-  display.display();
+String registered_passcode[20]; // variable used to hold the retrieved data from the eeprom memory
 
+// pre define passcodes: hardcoded
+// String predef_passcodes[] = {"9664", "9333"};
+String predef_passcodes[] = {"9644", "9333","5373", "2267"};
 
-}
-void showMessage(String message){
-display.clearDisplay();
-  display.setTextColor(WHITE);
-  display.setTextSize(2);
-  display.setCursor(4,10);
-  display.print(message);
-  display.display();
-  delay(4000);
-  display.clearDisplay();
-}
-
-void checkInputAndDecide(){
-  String compareThis, input;
-  for(int x=0; x < ARRAY_SIZE(user_input); x++){
-    input += user_input[x];
-  }
-  boolean matchTrigger = false;
-  while(EEPROM.read(addressOnEEPROM)> 0){
-    compareThis = readStringFromEEPROM(addressOnEEPROM);
-    if(compareThis == input){
-      matchTrigger = true;
-      break;
-    }
-    addressOnEEPROM+=5;
-  }
-  if(matchTrigger == false){
-    showMessage("Error");
-    addressOnEEPROM =1;
-    
-  }else{
-    digitalWrite(relayPin, HIGH);
-    showMessage("Matched");
-    addressOnEEPROM =1;
-  }
-
-}
-String readStringFromEEPROM(int addrOffset)
+//  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
+void setup()
 {
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
-  for (int i = 0; i < newStrLen; i++){
-    data[i] = EEPROM.read(addrOffset + 1 + i);
-  }
-  data[newStrLen] = '\0'; // !!! NOTE !!! Remove the space between the slash "/" and "0" (I've added a space because otherwise there is a display bug)
-  return String(data);
-}
-
-void setup() {
+  
   Wire.begin();
   Serial.begin(9600);
-  
+
+  radio.begin();
+  radio.setAutoAck(false);
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
+  radio.setRetries(15, 15);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.openWritingPipe(meterTOmain_address);
+  // radio.openReadingPipe(1, address[0]);
+
+  /**
+   * code for meter >> main
+   *     radio.openWritingPipe(address[1]);
+   *     radio.stopListening();
+   */
+
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
-  display.begin(SH1106_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+  display.begin(SH1106_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3D (for the 128x64)
   // init done
+  // RTC
+  myRTC.begin();
+  setSyncProvider(myRTC.get); // the function to get the time from the RTC
+  if (timeStatus() != timeSet)
+  {
+    Serial.println("Unable to sync with the RTC");
+  }
+  else
+  {
+    Serial.println("RTC has set the system time");
+  }
+
 
   showMeterUnit();
-  readCodesFromEEEPROM();
-  pinMode(relayPin, OUTPUT);  //setup from relay
+  loadDataFromEEEPROM();
+  pinMode(relayPin, OUTPUT); // setup from relay
 }
 
-void loop() {
-
-  clearScreen:
-  // put your main code here, to run repeatedly:
-  showInputPasscode();
-  char keyValue = customKeypad.getKey();
-  if(keyValue){
-    switch(keyValue){
-      case 'B':
-          display.clearDisplay();
-          setCursor_column = 0;
-          keyValue = 0x00;
-          memset(user_input, 0, sizeof(user_input));
-          fixedNumberOfInputs =0;
-          goto clearScreen;
-      break;
-
-      case 'A':
-          checkInputAndDecide();
-          setCursor_column = 0;
-          keyValue = 0x00;
-          memset(user_input, 0, sizeof(user_input));
-          fixedNumberOfInputs =0;
-          goto clearScreen;
-      break;
-
-      default:
-        if(fixedNumberOfInputs < 4){
-            user_input[fixedNumberOfInputs] = keyValue;
-            showsUser_input(keyValue);
-            keyValue = 0x00;
-            fixedNumberOfInputs++;
-        }
-      break;
-    }
-  }
-  digitalWrite(relayPin, LOW);
-
-
-}
