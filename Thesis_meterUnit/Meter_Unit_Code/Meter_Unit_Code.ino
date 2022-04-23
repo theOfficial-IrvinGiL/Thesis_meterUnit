@@ -1,5 +1,4 @@
 
-
 /**Notice:
 (function keys for the meter unit)
 A - Enter key
@@ -10,7 +9,10 @@ D - update button
 **/
 
 // library instantiations
-#include <SPI.h> //has to be included according to the new library that will be used for the oled
+
+
+//include libraries for the 128x32 oled display
+#include <SPI.h>    //has to be included according to the new library that will be used for the oled
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
@@ -24,6 +26,9 @@ D - update button
 
 #define OLED_RESET 4        // dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+
+#define OLED_RESET 4   //dont know what this is for but it is important to be included
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 // define the values to be used in the keypad
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -34,6 +39,7 @@ char hexaKeys[ROWS][COLS] = {
     {'*', '0', '#', 'D'}};
 byte rowPins[ROWS] = {2, 3, 4, 5};
 byte colPins[COLS] = {A0, A1, A2, A3};
+
 
 // code for initializing object for RTC
 DS3232RTC myRTC;
@@ -102,11 +108,7 @@ String predef_passcodes[] = {"9644", "9333","5373", "2267"};
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
 {
-  //  if(rtc.lostPower()){
-  //  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  //  rtc.adjust(DateTime(2022, 4, 22, 9, 26, 0));
-  //  }
-  //
+  
   Wire.begin();
   Serial.begin(9600);
 
@@ -139,8 +141,10 @@ void setup()
     Serial.println("RTC has set the system time");
   }
 
+
   showMeterUnit();
   loadDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
   oled_timestamp = millis();
 }
+
