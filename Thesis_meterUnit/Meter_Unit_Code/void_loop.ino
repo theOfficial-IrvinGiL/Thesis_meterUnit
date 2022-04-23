@@ -98,6 +98,7 @@ void loop()
     else if (oled_active == HIGH) // show text if oled trigger is high
     {
       showInputPasscode();
+      //  turn off oled after 2 minutes since last activity
       if (millis() - oled_timestamp > 120000)
       {
         showMessage("Oled timeout");
