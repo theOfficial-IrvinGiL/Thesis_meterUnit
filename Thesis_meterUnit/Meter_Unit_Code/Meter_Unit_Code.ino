@@ -73,6 +73,7 @@ bool measureMode = false;      // variable indicator to measure mode or not
 
 // char keyValue = customKeypad.getKey();  //used for getting value when pressing the keypad
 
+
 // variables used for millis on measuring functions
 const long thisInterval = 10000;
 unsigned long previousMillis = 0;
