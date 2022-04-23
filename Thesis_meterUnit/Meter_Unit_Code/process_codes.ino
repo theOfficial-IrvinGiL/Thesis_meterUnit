@@ -8,6 +8,15 @@
 //   fixedNumberOfInputs = 0;
 // }
 
+// method for resetting the memory of the user_input array
+void userInput_memset()
+{
+  for (int x = 0; x < sizeof(user_input); x++)
+  {
+    user_input[x] = "";
+  }
+}
+
 // this method gets the user input and compares it to the passcode values retrieved from the eeprom
 void checkInputAndDecide()
 {
@@ -147,8 +156,7 @@ void measureEnergy(float current, float voltage, float power, float energy)
   // display the readed values on oled
   showEnergy_onOled(String(energy, 3), String(voltage, 5), String(power, 5), String(current, 5));
 
-  // if (millis() - previousMillis >= 60000)
-
+  // checks the power on the circuit if there is load connected
   if (millis() - previousMillis >= 10000)
   {
     if (power <= 0)
@@ -254,5 +262,5 @@ void sendTo_main(String message)
     radio.write(&data, sizeof(data)); // Sending the data
     delay(100);
   }
-  // delay(10);
+  oled_timestamp = millis();
 }

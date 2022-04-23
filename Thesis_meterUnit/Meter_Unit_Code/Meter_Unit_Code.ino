@@ -87,6 +87,8 @@ float timestamp_Energy = 0;
 boolean sendRF_mode = false;
 String RF_message = "";       // contaianer variable for the message to send through RF
 String this_userContact = ""; // container variable for the
+boolean oled_active = true;   // trigger variable indicator for the oled display
+unsigned long oled_timestamp = 0;
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
@@ -140,4 +142,5 @@ void setup()
   showMeterUnit();
   loadDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
+  oled_timestamp = millis();
 }
