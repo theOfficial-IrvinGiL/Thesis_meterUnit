@@ -67,13 +67,32 @@ void loop()
 
         // pressing *D means to end the measuring process of the unit
         case 'D':
-          //         // when pressed, interupts the unit into update mode
-          //         // write code for updating eeprom memory here
-          //         showMessage("System updating!");
-          // //        RF_setupListen();
-          //         processRFdata();
-          //         writeData_toEEPROM(); // write data into the eeprom
-          //         resetPasscodeArray(); // reset the passcode array
+
+          boolean update_trig = false;
+          // when pressed, interupts the unit into update mode
+          // write code for updating eeprom memory here
+          showMessage("System updating!");
+          // loop until the update trig is returned true
+          while (update_trig == false)
+          {
+            if (update_trig == HIGH)
+            {
+              break;
+            }
+            else
+            {
+              update_trig = RF_Listen();
+            }
+          }
+
+          // write code for writting received values into the eeprom
+          for (int x = 0; x < sizeof(passcodeReceived); x++)
+          {
+            writeStringIntoEEPROM((x * 4), passcodeReceived[x]);
+          }
+
+          resetPass_arrayxindex();
+          showMessage("Done updating!");
           break;
 
         default:

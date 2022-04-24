@@ -95,12 +95,14 @@ unsigned long oled_timestamp = 0; // variable to capture the timestamp instance 
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
+int receivePass_index = 0;    //variable used as index reference for receiving data from NRF
 
 String registered_passcode[20]; // variable used to hold the retrieved data from the eeprom memory
 
+
 // pre define passcodes: hardcoded
 // String predef_passcodes[] = {"9664", "9333"};
-String predef_passcodes[] = {"9644", "9333", "5373", "2267"};
+String predef_passcodes[] = {"9644", "2923", "5373", "2267", "5906"};
 
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
@@ -114,7 +116,7 @@ void setup()
   SPI.setClockDivider(SPI_CLOCK_DIV4);
   radio.setRetries(15, 15);
   radio.setPALevel(RF24_PA_MAX);
-  radio.openWritingPipe(meterTOmain_address);
+
   // radio.openReadingPipe(1, address[0]);
 
   /**
@@ -139,7 +141,7 @@ void setup()
   }
 
   showMeterUnit();
-  loadDataFromEEEPROM();
+  fetchDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
   oled_timestamp = millis(); // for oled_timestamp reference
 }

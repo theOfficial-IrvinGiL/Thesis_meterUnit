@@ -4,6 +4,8 @@
  * Note: in dealing with the data that will be broadcasted from the main unit
  * only the unique passcode of the users will be send and stored in eeprom to
  * keep simplicity and avoid complex bugs and code design.
+ * 
+ * - EEPROM is programmed to have a <= 300 address for the systems utilization
  */
 
 // method to read existing data from the internal eeprom memory
@@ -20,7 +22,7 @@ String readStringFromEEPROM(int address)
 }
 
 // method used to read stored codes in eeprom
-void loadDataFromEEEPROM()
+void fetchDataFromEEEPROM()
 {
   String code = "";
 

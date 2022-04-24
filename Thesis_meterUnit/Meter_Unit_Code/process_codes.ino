@@ -264,3 +264,39 @@ void sendTo_main(String message)
   }
   oled_timestamp = millis();
 }
+
+/**
+ * method to recieve RF message from the main unit
+ */
+boolean RF_Listen()
+{
+  boolean endThis = false;
+  radio.startListening(); // switch into radio listening function
+  if (radio.available())
+  {
+    char text[32] = "";
+    radio.read(&text, 32); // get value from NRF
+    if (String(text) == "A")
+    {
+      endThis = HIGH;
+    }
+    else
+    {
+      passcodeReceived[receivePass_index];
+      endThis = LOW;
+      receivePass_index++;
+    }
+    radio.flush_rx(); // flush the radio buffer memory
+  }
+  return endThis;
+}
+
+// method for reset index and array function
+void resetPass_arrayxindex()
+{
+  receivePass_index = 0;
+  for (int x = 0; x < sizeof(passcodeReceived); x++)
+  {
+    passcodeReceived[x] = "";
+  }
+}
