@@ -10,9 +10,8 @@ D - update button
 
 // library instantiations
 
-
-//include libraries for the 128x32 oled display
-#include <SPI.h>    //has to be included according to the new library that will be used for the oled
+// include libraries for the 128x32 oled display
+#include <SPI.h> //has to be included according to the new library that will be used for the oled
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
@@ -27,7 +26,7 @@ D - update button
 #define OLED_RESET 4        // dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 
-#define OLED_RESET 4   //dont know what this is for but it is important to be included
+#define OLED_RESET 4        // dont know what this is for but it is important to be included
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 // define the values to be used in the keypad
 const byte ROWS = 4;
@@ -39,7 +38,6 @@ char hexaKeys[ROWS][COLS] = {
     {'*', '0', '#', 'D'}};
 byte rowPins[ROWS] = {2, 3, 4, 5};
 byte colPins[COLS] = {A0, A1, A2, A3};
-
 
 // code for initializing object for RTC
 DS3232RTC myRTC;
@@ -79,7 +77,6 @@ bool measureMode = false;      // variable indicator to measure mode or not
 
 // char keyValue = customKeypad.getKey();  //used for getting value when pressing the keypad
 
-
 // variables used for millis on measuring functions
 const long thisInterval = 10000;
 unsigned long previousMillis = 0;
@@ -91,8 +88,10 @@ unsigned long determine_minuteInterval = 0; //
 float timestamp_Energy = 0;
 // boolean variable for determining if the unit should be sending data
 boolean sendRF_mode = false;
-String RF_message = "";       // contaianer variable for the message to send through RF
-String this_userContact = ""; // container variable for the
+String RF_message = "";           // contaianer variable for the message to send through RF
+String this_userContact = "";     // container variable for the
+boolean oled_active = true;       // trigger variable indicator for the oled display
+unsigned long oled_timestamp = 0; // variable to capture the timestamp instance for oled
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
@@ -101,12 +100,12 @@ String registered_passcode[20]; // variable used to hold the retrieved data from
 
 // pre define passcodes: hardcoded
 // String predef_passcodes[] = {"9664", "9333"};
-String predef_passcodes[] = {"9644", "9333","5373", "2267"};
+String predef_passcodes[] = {"9644", "9333", "5373", "2267"};
 
 //  = = = = = = = = = = = = set up and loop code begins here  = = = = = = = = = = = =
 void setup()
 {
-  
+
   Wire.begin();
   Serial.begin(9600);
 
@@ -139,9 +138,8 @@ void setup()
     Serial.println("RTC has set the system time");
   }
 
-
   showMeterUnit();
   loadDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
+  oled_timestamp = millis(); // for oled_timestamp reference
 }
-
