@@ -29,11 +29,11 @@ void checkInputAndDecide()
 
   // for (int x = 0; x < sizeof(registered_passcode); x++)
   // {
-  for (int y = 0; y < sizeof(predef_passcodes); y++)
+  for (int y = 0; y < 20; y++)
   {
     // if (String(user_input) == predef_passcodes[y])
     // if (input == registered_passcode[x])
-    String var = predef_passcodes[y];
+    String var = readStringFromEEPROM(y * 4);
     if (input == var)
     {
       matchTrigger = HIGH;
@@ -41,6 +41,17 @@ void checkInputAndDecide()
       // input = this_userContact;
       this_userContact = input;
       break;
+      break;
+    }
+    else if (input == "DDDD")
+    {
+      // clear eeprom
+      for (int i = 0; i < EEPROM.length(); i++)
+      {
+        EEPROM.write(i, 0);
+      }
+      
+      receiveProcess();
       break;
     }
     else
@@ -68,11 +79,13 @@ void checkInputAndDecide()
   {
     showMessage("Error");
     display.clearDisplay();
+    display.display();
+    showInputPasscode();
     // addressOnEEPROM = 1;
     measureMode = LOW;
     // memset(user_input, 0, sizeof(user_input));
   }
-  else
+  else if (matchTrigger == HIGH)
   {
     digitalWrite(relayPin, HIGH);
     showMessage("Matched");
@@ -186,6 +199,7 @@ void measureEnergy(float current, float voltage, float power, float energy)
       memset(user_input, 0, sizeof(user_input));
       fixedNumberOfInputs = 0;
       display.clearDisplay();
+      display.display();
     }
     previousMillis = millis();
   }
@@ -268,35 +282,40 @@ void sendTo_main(String message)
 /**
  * method to recieve RF message from the main unit
  */
-boolean RF_Listen()
-{
-  boolean endThis = false;
-  radio.startListening(); // switch into radio listening function
-  if (radio.available())
-  {
-    char text[32] = "";
-    radio.read(&text, 32); // get value from NRF
-    if (String(text) == "A")
-    {
-      endThis = HIGH;
-    }
-    else
-    {
-      passcodeReceived[receivePass_index];
-      endThis = LOW;
-      receivePass_index++;
-    }
-    radio.flush_rx(); // flush the radio buffer memory
-  }
-  return endThis;
-}
+// boolean RF_Listen()
+// {
+//   boolean endThis = false;
+//   radio.startListening(); // switch into radio listening function
+//   if (radio.available())
+//   {
+//     char text[32] = "";
+//     radio.read(&text, 32); // get value from NRF
+//     if (String(text) == "A")
+//     {
+//       endThis = HIGH;
+//     }
+//     else
+//     {
+//       passcodeReceived[receivePass_index];
+//       endThis = LOW;
+//       receivePass_index++;
+//     }
+//     radio.flush_rx(); // flush the radio buffer memory
+//   }
+//   return endThis;
+// }
 
 // method for reset index and array function
 void resetPass_arrayxindex()
 {
-  receivePass_index = 0;
+  // clear the received array
   for (int x = 0; x < sizeof(passcodeReceived); x++)
   {
     passcodeReceived[x] = "";
   }
+  // load data from eeprom
+  // fetchDataFromEEEPROM();
 }
+
+// reset function
+void (*resetFunc)(void) = 0;

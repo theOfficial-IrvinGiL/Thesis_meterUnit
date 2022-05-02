@@ -4,7 +4,7 @@
  * Note: in dealing with the data that will be broadcasted from the main unit
  * only the unique passcode of the users will be send and stored in eeprom to
  * keep simplicity and avoid complex bugs and code design.
- * 
+ *
  * - EEPROM is programmed to have a <= 300 address for the systems utilization
  */
 
@@ -22,27 +22,27 @@ String readStringFromEEPROM(int address)
 }
 
 // method used to read stored codes in eeprom
-void fetchDataFromEEEPROM()
-{
-  String code = "";
+// void fetchDataFromEEEPROM()
+// {
+//   String code = "";
 
-  if (EEPROM.read(0) <= 0)
-  {
-    // Serial.println("No memories on eeprom");
-    showMessage("No memories on eeprom");
-  }
-  else
-  {
-    for (int x = 0; x < sizeof(registered_passcode); x++)
-    {
-      String loaded_data = readStringFromEEPROM(x * 4);
-      if (loaded_data != "")
-      {
-        registered_passcode[x] = loaded_data;
-      }
-    }
-  }
-}
+//   if (EEPROM.read(0) <= 0)
+//   {
+//     // Serial.println("No memories on eeprom");
+//     showMessage("No Data!");
+//     display.clearDisplay();
+//     display.display();
+//   }
+//   else
+//   {
+//     for (int x = 0; x < sizeof(registered_passcode); x++)
+//     {
+//       String loaded_data = readStringFromEEPROM(x * 4);
+
+//       registered_passcode[x] = loaded_data;
+//     }
+//   }
+// }
 
 // method that returns the value from eeprom that is retrieved
 // String readStringFromEEPROM(int addrOffset)

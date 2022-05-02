@@ -9,7 +9,7 @@ void showMeterUnit() {
   display.setTextSize(2);
   //set the cursor coordinates
   display.setCursor(4, 10);
-  display.print("Meter Unit");
+  display.print("METER UNIT");
   //display the "meter unit" text
   display.display();
   delay(4000);

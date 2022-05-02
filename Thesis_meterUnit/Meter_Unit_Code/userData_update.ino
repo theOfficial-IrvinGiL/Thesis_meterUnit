@@ -3,46 +3,49 @@
 /**
  * method for processing the data from the radio buffer
  */
-void processRFdata()
+
+/**
+ * method to reset the receive passcode array
+ */
+// void resetPasscodeArray()
+// {
+//     for (int x = 0; x < sizeof(passcodeReceived); x++)
+//     {
+//         passcodeReceived[x] = "";
+//     }
+// }
+void receiveProcess()
 {
-    unsigned int passcodeCount = 0;
-    unsigned long now_millis = millis();
-    while ((millis() - now_millis) < 300000)
+    radio.startListening();
+    showMessage("System updating!");
+    // loop until the update trig is returned true
+    int receiveIndex = 0;
+    
+
+    while (true)
     {
         if (radio.available())
         {
             char text[32] = "";
             radio.read(&text, sizeof(text));
-            if (passcodeCount == 0)
+            if (String(text) == "A")
             {
-                passcodeReceived[passcodeCount] = String(text);
-                passcodeCount++;
+                break;
             }
-            else
-            {
+            // else if (String(text) == "")
+            // {
+            //     continue;
+            // }
 
-                if (String(text) == "")
-                {
-                    break;
-                    break;
-                }
-                else
-                {
-                    passcodeReceived[passcodeCount] = String(text);
-                    passcodeCount++;
-                }
-            }
+            writeStringIntoEEPROM((receiveIndex * 4), String(text));
+            receiveIndex++;
         }
     }
-}
-
-/**
- * method to reset the receive passcode array
- */
-void resetPasscodeArray()
-{
-    for (int x = 0; x < sizeof(passcodeReceived); x++)
-    {
-        passcodeReceived[x] = "";
-    }
+    radio.flush_rx();
+    
+    // write code for writting received values into the eeprom
+    showMessage("Done updating!");
+    resetFunc();
+    display.clearDisplay();
+    display.display();
 }

@@ -50,9 +50,9 @@ RF24 radio(9, 10); // CE, CSN
 // object for keypad
 Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
 // Setting the two addresses. One for transmitting and one for receiving
-// const byte address[][6] = {"00001", "00002"};
-const byte meterTOmain_address[6] = "00001";
-const byte mainTOmeter_address[6] = "00002";
+const byte RF_address[][6] = {"00001", "00002"};
+// const byte meterTOmain_address[6] = "00001";
+// const byte mainTOmeter_address[6] = "00002";
 /**
  * 00001 - meter unit >> main unit
  * 00002 - main unit >> meter unit
@@ -95,10 +95,10 @@ unsigned long oled_timestamp = 0; // variable to capture the timestamp instance 
 
 // variable declaration that deals with updating the user data : Main -> Meter transmittion
 String passcodeReceived[20];
-int receivePass_index = 0;    //variable used as index reference for receiving data from NRF
+int receivePass_index = 0; // variable used as index reference for receiving data from NRF
 
+// String received_passcode[20];
 String registered_passcode[20]; // variable used to hold the retrieved data from the eeprom memory
-
 
 // pre define passcodes: hardcoded
 // String predef_passcodes[] = {"9664", "9333"};
@@ -117,13 +117,9 @@ void setup()
   radio.setRetries(15, 15);
   radio.setPALevel(RF24_PA_MAX);
 
-  // radio.openReadingPipe(1, address[0]);
-
-  /**
-   * code for meter >> main
-   *     radio.openWritingPipe(address[1]);
-   *     radio.stopListening();
-   */
+  radio.openReadingPipe(1, RF_address[1]); // Setting the address at which we will receive the data
+  radio.openWritingPipe(RF_address[0]);    // setting the address on which to send the data
+  radio.setPALevel(RF24_PA_MAX);
 
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SH1106_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3D (for the 128x64)
@@ -141,7 +137,8 @@ void setup()
   }
 
   showMeterUnit();
-  fetchDataFromEEEPROM();
+  // fetchDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
   oled_timestamp = millis(); // for oled_timestamp reference
+  showInputPasscode();
 }
