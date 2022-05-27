@@ -29,6 +29,7 @@ void loop()
 
     radio.stopListening();
 
+    // showInputPasscode();
     //  turn off oled after 2 minutes since last activity
     if (millis() - oled_timestamp > 60000)
     {
@@ -84,6 +85,12 @@ void loop()
           oled_timestamp = millis();
 
           break;
+
+        // pressing *D means to end the measuring process of the unit
+        // case 'D':
+
+        //   receiveProcess();
+        //   break;
 
         default:
           // will not accept user input from user once the fixedNumberOfInputs reaches 4

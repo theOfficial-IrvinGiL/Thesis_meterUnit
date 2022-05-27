@@ -140,5 +140,5 @@ void setup()
   // fetchDataFromEEEPROM();
   pinMode(relayPin, OUTPUT); // setup from relay
   oled_timestamp = millis(); // for oled_timestamp reference
-  showInputPasscode();  //show input passcode message
+  showInputPasscode();
 }

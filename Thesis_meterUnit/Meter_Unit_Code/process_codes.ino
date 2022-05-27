@@ -1,5 +1,12 @@
 // methods that are responsible for background process functions are written here:
 
+// void resetForReMeasure()
+// {
+//   setCursor_column = 0;
+//   keyValue = 0x00;
+//   memset(user_input, 0, sizeof(user_input));
+//   fixedNumberOfInputs = 0;
+// }
 
 // method for resetting the memory of the user_input array
 void userInput_memset()
@@ -52,7 +59,20 @@ void checkInputAndDecide()
       matchTrigger = LOW;
     }
   }
+  // }
 
+  // while (EEPROM.read(addressOnEEPROM) > 0)
+  // {
+  //   compareThis = readStringFromEEPROM(addressOnEEPROM);
+  //   // if (compareThis == input)
+  //   if (input == "1157")
+  //   {
+  //     matchTrigger = true;
+  //     previousMillis = millis();
+  //     break;
+  //   }
+  //   addressOnEEPROM += 5;
+  // }
 
   // deciding action to determine the mode of the meter unit (Measure mode: ON / OFF)
   if (matchTrigger == LOW)
@@ -84,6 +104,67 @@ void checkInputAndDecide()
 // method code for PZEM 004T to display the energy computed from the library
 void measureEnergy(float current, float voltage, float power, float energy)
 {
+  // for voltage display on serial
+  // if (voltage != NAN)
+  // {
+  //   Serial.print("Voltage: ");
+  //   Serial.print(voltage, 9);
+  //   Serial.println("V");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading voltage");
+  // }
+
+  // // for Power display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Power: ");
+  //   Serial.print(power, 9);
+  //   Serial.println("W");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading power");
+  // }
+
+  // // for current display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Current: ");
+  //   Serial.print(current, 9);
+  //   Serial.println("A");
+  // }
+  // else
+  // {
+  //   Serial.println("Error reading current");
+  // }
+
+  // // for current energy display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Current Energy consumption: ");
+  //   Serial.print(energy, 9);
+  //   Serial.println("kWh");
+  // }
+  // else
+  // {
+  //   Serial.println("Error current reading energy");
+  // }
+  // // for accumulated energy display on serial
+  // if (current != NAN)
+  // {
+  //   Serial.print("Accumulated Energy consumption: ");
+  //   Serial.print(energy + timestamp_Energy, 9);
+  //   Serial.println("kWh");
+  // }
+  // else
+  // {
+  //   Serial.println("Error current reading energy");
+  // }
+
+  // Serial.println();
+  // delay(2000);
 
   // display the readed values on oled
   showEnergy_onOled(String(energy, 3), String(voltage, 5), String(power, 5), String(current, 5));
@@ -127,6 +208,20 @@ void measureEnergy(float current, float voltage, float power, float energy)
 // code for concatinating the time and date into the RFmessage variable
 void concatDateTime(String energy_consumed, String passcode)
 {
+  // DateTime Thisnow = rtc.now();
+  /**
+  *digital clock display of the time
+    Serial.print(hour());
+    printDigits(minute());
+    printDigits(second());
+    Serial.print(' ');
+    Serial.print(day());
+    Serial.print(' ');
+    Serial.print(month());
+    Serial.print(' ');
+    Serial.print(year());
+    Serial.println();
+  */
 
   RF_message += passcode;
   RF_message += "_"; // buffer character
@@ -146,7 +241,9 @@ void concatDateTime(String energy_consumed, String passcode)
   RF_message += "_";             // buffer character
   RF_message += energy_consumed; // concat the current energy consumed data
 
-  
+  // RF_message += "_"; // buffer character
+  // RF_message += passcode;
+  // RF_message += "1157";
 }
 
 // method for sending data over RF to main unit
@@ -167,6 +264,13 @@ void sendTo_main(String message)
     data[x] = message[x];
   }
 
+  //  const char data[] = "First Data";
+  /**
+  *const char text[] = "WASSUP";
+    radio.write(&text, sizeof(text));
+    Serial.println(text);
+    delay(800);
+  */
   while (millis() - broadcastStart <= 2000)
   {
     radio.write(&data, sizeof(data)); // Sending the data
@@ -175,6 +279,31 @@ void sendTo_main(String message)
   oled_timestamp = millis();
 }
 
+/**
+ * method to recieve RF message from the main unit
+ */
+// boolean RF_Listen()
+// {
+//   boolean endThis = false;
+//   radio.startListening(); // switch into radio listening function
+//   if (radio.available())
+//   {
+//     char text[32] = "";
+//     radio.read(&text, 32); // get value from NRF
+//     if (String(text) == "A")
+//     {
+//       endThis = HIGH;
+//     }
+//     else
+//     {
+//       passcodeReceived[receivePass_index];
+//       endThis = LOW;
+//       receivePass_index++;
+//     }
+//     radio.flush_rx(); // flush the radio buffer memory
+//   }
+//   return endThis;
+// }
 
 // method for reset index and array function
 void resetPass_arrayxindex()
